@@ -1,0 +1,24 @@
+{
+  "name": "ghostyc",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Ghostyc - private personal remote PC control",
+  "workspaces": [
+    "packages/*",
+    "apps/relay",
+    "apps/agent",
+    "apps/web",
+    "apps/wol-bridge"
+  ],
+  "scripts": {
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "dev:relay": "npm run dev --workspace apps/relay",
+    "dev:agent": "npm run dev --workspace apps/agent",
+    "dev:web": "npm run dev --workspace apps/web",
+    "dev:bridge": "npm run dev --workspace apps/wol-bridge"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

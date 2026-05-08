@@ -1,0 +1,67 @@
+name: iOS Build
+
+on:
+  push:
+    paths:
+      - 'apps/ios/**'
+      - '.github/workflows/ios-build.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+    defaults:
+      run:
+        working-directory: apps/ios
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build (no code signing)
+        run: |
+          xcodebuild build \
+            -project Ghostyc.xcodeproj \
+            -scheme Ghostyc \
+            -destination 'generic/platform=iOS Simulator' \
+            -configuration Release \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            ONLY_ACTIVE_ARCH=NO \
+            | tail -20
+
+      - name: Archive for device (unsigned)
+        run: |
+          xcodebuild archive \
+            -project Ghostyc.xcodeproj \
+            -scheme Ghostyc \
+            -archivePath build/Ghostyc.xcarchive \
+            -destination 'generic/platform=iOS' \
+            -configuration Release \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            ONLY_ACTIVE_ARCH=NO \
+            | tail -20
+
+      - name: Export .app from archive
+        run: |
+          mkdir -p build/Payload
+          cp -r build/Ghostyc.xcarchive/Products/Applications/Ghostyc.app build/Payload/
+          cd build && zip -r Ghostyc.ipa Payload/
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ghostyc-unsigned-ipa
+          path: apps/ios/build/Ghostyc.ipa
+          if-no-files-found: warn
